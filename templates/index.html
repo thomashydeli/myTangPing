@@ -46,13 +46,13 @@
             background-color: var(--box-background-color);
             border-radius: 10px;
             padding: 20px;
-            max-width: 500px;
+            max-width: 800px;
             box-shadow: var(--box-shadow);
             width: 100%;
         }
 
         #messages {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
             margin-bottom: 20px;
             border: 1px solid #ccc;
@@ -75,6 +75,7 @@
             padding: 5px;
             margin-right: 10px;
             outline: none;
+            font-size: 16px;
         }
 
         #chat-form button {
@@ -91,6 +92,19 @@
             background-color: #0056b3;
         }
 
+        #email-icon {
+            display: inline-block;
+            color: var(--primary-color);
+            font-size: 24px;
+            text-decoration: none;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        #email-icon:hover {
+            color: #0056b3;
+        }
+
         .loading-spinner {
             display: inline-block;
             width: 16px;
@@ -101,9 +115,36 @@
             animation: loading-spinner 1s linear infinite;
         }
 
+        .profile-picture {
+            max-width: 24px;
+            max-height: 24px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .profile-description {
+            font-size: 14px;
+            color: #888;
+            margin: 0;
+        }
+
+        .email-text {
+            font-size: 16px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
         @keyframes loading-spinner {
             to {
                 transform: rotate(1turn);
+            }
+        }
+
+        @media screen and (max-width: 867px) {
+            #chat {
+                max-width: 100%;
+                width: 100%;
             }
         }
     </style>
@@ -112,7 +153,10 @@
     <div id="chat">
         <div id="title-container">
             <img src="{{ url_for('static', filename='profile.png') }}" alt="Profile Image">
+            <p class="profile-description">你好，我叫梅，是一位AI心理咨询师。|  Hi, I'm May, I'm an AI therapist.</p>
             <h1>躺平故事 | Stories about TangPing</h1>
+            <a href="mailto:youremail@example.com" id="email-icon"><i class="fas fa-envelope"></i></a>
+            <span class="email-text">我的树洞</span>
         </div>
         <div id="messages"></div>
         <form id="chat-form">
@@ -122,6 +166,10 @@
     </div>
 
     <script>
+        function scrollToBottom(element) {
+            element.scrollTop = element.scrollHeight;
+        }
+
         document.getElementById('chat-form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -130,10 +178,13 @@
             
             const message = messageInput.value;
             messageInput.value = '';
-            messagesDiv.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
+            messagesDiv.innerHTML += `<p><strong>你 | You:</strong> ${message}</p>`;
+            scrollToBottom(messagesDiv);
+            
             const loadingMessage = document.createElement('p');
-            loadingMessage.innerHTML = `<span class="loading-spinner"></span> <strong>Thinking...</strong>`;
+            loadingMessage.innerHTML = `<span class="loading-spinner"></span> <strong>思考中... | Thinking...</strong>`;
             messagesDiv.appendChild(loadingMessage);
+            scrollToBottom(messagesDiv); // Add this line to scroll after adding the loading spinner
             
             const response = await fetch('/chat', {
                 method: 'POST',
@@ -146,12 +197,12 @@
 
             if (response.ok) {
                 const data = await response.json();
-                messagesDiv.innerHTML += `<p><strong>梅 | May:</strong> ${data.response}</p>`;
+                messagesDiv.innerHTML += `<p><img src="{{ url_for('static', filename='profile.png') }}" alt="May's Profile" class="profile-picture"> <strong>梅 | May:</strong> ${data.response}</p>`;
             } else {
-                messagesDiv.innerHTML += `<p><strong>Error:</strong> 暂时无法获取来自梅的回应 | Unable to get May's response.</p>`;
+                messagesDiv.innerHTML += `<p><strong>错误 | Error:</strong> 暂时无法获取来自梅的回应 | Unable to get May's response.</p>`;
             }
 
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            scrollToBottom(messagesDiv);
         });
     </script>
 </body>

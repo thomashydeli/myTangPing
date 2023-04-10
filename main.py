@@ -17,7 +17,7 @@ import jieba
 
 # global variable
 RETRY=5 # for retrying
-MAXLEN=4096 # controlling the maximum token from GPT4 output
+MAXLEN=6400 # controlling the maximum token from GPT4 output
 CHAT_HISTORY=[] # empty list initiated to preserve chat history
 N_TOKENS=500 # number of tokens for chunck-size the text
 
@@ -41,8 +41,11 @@ prompt="""
 故事:
 {context}
 
-根据上面的故事，以及你的任务，请你回答下面的问题。在回答问题的时候，如果有被问到并且需要讲故事的话，那么就根据上面的几个故事，给提问者讲一个故事{lang_plugin0}，一定要像讲故事一样讲给提问者（不要说这是总结，你可以说“我所了解到”、”从我听到过的故事中“、”我知道有些诸如“等其他类似的表达方式。同时你可以选择只挑一个故事讲，或者把几个故事拼在一起总结式地讲），然后再回答他们的问题:
-{question}{chat_history}{language_plugin}
+根据上面的故事，以及你的任务，请你回答下面的问题。在回答问题的时候，如果有被问到并且需要讲故事的话，那么就根据上面的几个故事，给提问者讲一个故事{lang_plugin0}，一定要像讲故事一样讲给提问者（不要说这是总结，你可以说“我所了解到”、”从我听到过的故事中“、”我知道有些诸如“等其他类似的表达方式。同时你可以选择只挑一个故事讲，或者把几个故事拼在一起总结式地讲），然后再回答他们的问题。
+{chat_history}
+
+问题：
+{question}{language_plugin}
 """
 
 lang_prompt="""你能把这个问题翻译成简体中文么？问题是：{question}"""
@@ -175,7 +178,7 @@ def process_chat_message(message, chat_history):
     ).lstrip().rstrip()
     print(f'[INFO] language used: {lang_used}')
     lang_plugin0=''
-    lang_plugin=''
+    lang_plugin='\n最后，请以梅/May的身份回答这个问题（只需给出答案即可，不要再复述，也不用提及你的名字，自然地回答就好）：'
     if 'cn' not in lang_used:
         currentPrompt=lang_prompt.format(question=message)
         i=0
@@ -195,10 +198,10 @@ def process_chat_message(message, chat_history):
         message=deepcopy(translated)
         if 'en' in lang_used:
             lang_plugin0='(这里请用英文)'
-            lang_plugin='\n最后，请用英文回答这个问题（只需给出答案即可，不需要用简体中文再复述）：'
+            lang_plugin='\n最后，请以梅/May的身份用英文回答这个问题（只需给出答案即可，不要再复述，也不用提及你的名字，自然地回答就好）：'
         elif 'tw' in lang_used:
             lang_plugin0='（这里请用繁体中文）'
-            lang_plugin='\n最后，请用繁体中文回答这个（只需给出答案即可，不需要用简体中文再复述）：'
+            lang_plugin='\n最后，请以梅/May的身份用繁体中文回答这个问题（只需给出答案即可，不要再复述，也不用提及你的名字，自然地回答就好）：'
 
     query=deepcopy(message)
     query+=chat_history_context
@@ -225,10 +228,10 @@ def process_chat_message(message, chat_history):
         print(f'[INFO] current try: {i+1}')
         try:
             print(f'[INFO] ready to get response')
-            output=getResponse3(
+            output=getResponse(
                 prompt=currentPrompt,
-                max_tokens=MAXLEN-int(len(currentPrompt)*1.2+256),
-                temperature=0.2,
+                max_tokens=MAXLEN-len(currentPrompt),
+                temperature=0.5,
             ).lstrip().rstrip()
             print(f'[INFO] response acquired as {output}')
         except Exception as e:
