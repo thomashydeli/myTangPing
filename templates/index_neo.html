@@ -5,16 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>躺平故事 | Stories About TangPing</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #007bff;
             --background-color: #f5f5f5;
             --box-background-color: #fff;
             --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --font-family: 'Roboto', sans-serif;
+            --font-size-base: 16px;
+            --line-height-base: 1.5;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: var(--font-family);
+            font-size: var(--font-size-base);
+            line-height: var(--line-height-base);
             margin: 0;
             padding: 20px;
             background-color: var(--background-color);
@@ -22,12 +32,14 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-size: cover; /* Add this line */
-            background-position: center; /* Add this line */
+            background-size: cover;
+            background-position: center;
         }
 
         #title-container h1 {
-            font-size: 24px;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
         }
 
         #title-container {
@@ -40,6 +52,11 @@
             margin-bottom: 10px;
             border-radius: 50%;
             box-shadow: var(--box-shadow);
+            transition: transform 0.3s;
+        }
+
+        #title-container img:hover {
+            transform: scale(1.1);
         }
 
         #chat {
@@ -86,6 +103,7 @@
             padding: 5px 10px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s;
         }
 
         #chat-form button:hover {
@@ -99,6 +117,7 @@
             text-decoration: none;
             margin-left: 10px;
             vertical-align: middle;
+            transition: color 0.3s;
         }
 
         #email-icon:hover {
@@ -139,6 +158,7 @@
             cursor: pointer;
             margin-left: 5px;
             color: var(--primary-color);
+            transition: color 0.3s;
         }
 
         .vote-button:hover {
@@ -174,7 +194,6 @@
             <button type="submit"><i class="fas fa-paper-plane"></i></button>
         </form>
     </div>
-
     <script>
         let messageCounter=0;
 
@@ -187,75 +206,76 @@
             upvoteButton.className = 'fas fa-thumbs-up vote-button';
             upvoteButton.onclick = async () => {
                 console.log(`Upvote clicked for message ${messageId}`);
-                const response = await fetch('/vote', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message_id: messageId, message_content: messageContent, vote_type: 'upvote' }),
-                });
-                // Add your logic for upvote here, e.g., send an AJAX request to your backend to update the vote count
-            };
-
-            const downvoteButton = document.createElement('i');
-            downvoteButton.className = 'fas fa-thumbs-down vote-button';
-            downvoteButton.onclick = async () => {
-                console.log(`Downvote clicked for message ${messageId}`);
-                const response = await fetch('/vote', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message_id: messageId, message_content: messageContent, vote_type: 'downvote' }),
-                });
-                // Add your logic for downvote here, e.g., send an AJAX request to your backend to update the vote count
-            };
-
-            messageElement.appendChild(upvoteButton);
-            messageElement.appendChild(downvoteButton);
-        }
-
-
-        document.getElementById('chat-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const messageInput = document.getElementById('message-input');
-            const messagesDiv = document.getElementById('messages');
-            
-            const message = messageInput.value;
-            messageInput.value = '';
-            messagesDiv.innerHTML += `<p><strong>你 | You:</strong> ${message}</p>`;
-            scrollToBottom(messagesDiv);
-            
-            const loadingMessage = document.createElement('p');
-            loadingMessage.innerHTML = `<span class="loading-spinner"></span> <strong>思考中... | Thinking...</strong>`;
-            messagesDiv.appendChild(loadingMessage);
-            scrollToBottom(messagesDiv); // Add this line to scroll after adding the loading spinner
-            
-            const response = await fetch('/chat', {
+            const response = await fetch('/vote', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ message: message }),
+                body: JSON.stringify({ message_id: messageId, message_content: messageContent, vote_type: 'upvote' }),
             });
-            loadingMessage.remove();
+            // Add your logic for upvote here, e.g., send an AJAX request to your backend to update the vote count
+        };
 
-            if (response.ok) {
-                const data = await response.json(); // 添加这一行
-                messageCounter++;
-                const mayMessageId = `may_message_${messageCounter}`; // Create a unique ID for May's message
-                const mayMessageContent = data.response;
-                const mayMessageElement = document.createElement('p');
-                mayMessageElement.innerHTML = `<img src="{{ url_for('static', filename='profile.png') }}" alt="May's Profile" class="profile-picture"> <strong>梅 | May:</strong> ${data.response}`;
-                addVoteButtons(mayMessageElement, mayMessageContent, mayMessageId); // Replace 'may_message_id' with a unique ID for May's message
-                messagesDiv.appendChild(mayMessageElement);
-            } else {
-                messagesDiv.innerHTML += `<p><strong>错误 | Error:</strong> 暂时无法获取来自梅的回应 | Unable to get May's response.</p>`;
-            }
+        const downvoteButton = document.createElement('i');
+        downvoteButton.className = 'fas fa-thumbs-down vote-button';
+        downvoteButton.onclick = async () => {
+            console.log(`Downvote clicked for message ${messageId}`);
+            const response = await fetch('/vote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message_id: messageId, message_content: messageContent, vote_type: 'downvote' }),
+            });
+            // Add your logic for downvote here, e.g., send an AJAX request to your backend to update the vote count
+        };
 
-            scrollToBottom(messagesDiv);
+        messageElement.appendChild(upvoteButton);
+        messageElement.appendChild(downvoteButton);
+    }
+
+    document.getElementById('chat-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const messageInput = document.getElementById('message-input');
+        const messagesDiv = document.getElementById('messages');
+
+        const message = messageInput.value;
+        messageInput.value = '';
+        messagesDiv.innerHTML += `<p><strong>你 | You:</strong> ${message}</p>`;
+        scrollToBottom(messagesDiv);
+
+        const loadingMessage = document.createElement('p');
+        loadingMessage.innerHTML = `<span class="loading-spinner"></span> <strong>思考中... | Thinking...</strong>`;
+        messagesDiv.appendChild(loadingMessage);
+        scrollToBottom(messagesDiv); // Add this line to scroll after adding the loading spinner
+
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message }),
         });
+        loadingMessage.remove();
+
+        if (response.ok) {
+            const data = await response.json(); // 添加这一行
+            messageCounter++;
+            const mayMessageId = `may_message_${messageCounter}`; // Create a unique ID for May's message
+            const mayMessageContent = data.response;
+            const mayMessageElement = document.createElement('p');
+            mayMessageElement.innerHTML = `<img src="{{ url_for('static', filename='profile.png') }}" alt="May's Profile" class="profile-picture"> <strong>梅 | May:</strong> ${data.response}`;
+            addVoteButtons(mayMessageElement, mayMessageContent, mayMessageId); // Replace 'may_message_id' with a unique ID for May's message
+            messagesDiv.appendChild(mayMessageElement);
+        } else {
+            messagesDiv.innerHTML += `<p><strong>错误 | Error:</strong> 暂时无法获取来自梅的回应 | Unable to get May's response.</p>`;
+        }
+
+        scrollToBottom(messagesDiv);
+    });
     </script>
 </body>
 </html>
+
+

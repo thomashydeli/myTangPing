@@ -20,11 +20,18 @@ RETRY=5 # for retrying
 MAXLEN=6400 # controlling the maximum token from GPT4 output
 CHAT_HISTORY=[] # empty list initiated to preserve chat history
 N_TOKENS=500 # number of tokens for chunck-size the text
+messages_data={} # count of upvotes
 
 # loading secrets
-openai.api_key=os.environ.get('openai')
-aws_access_key_id=os.environ.get('aws_access_key_id')
-aws_secret_access_key=os.environ.get('aws_secret_access_key')
+with open('../secrets.json','rb') as f:
+    secrets=json.load(f)
+openai.api_key=secrets['openai']
+aws_access_key_id=secrets['aws_access_key_id']
+aws_secret_access_key=secrets['aws_secret_access_key']
+
+# openai.api_key=os.environ.get('openai')
+# aws_access_key_id=os.environ.get('aws_access_key_id')
+# aws_secret_access_key=os.environ.get('aws_secret_access_key')
 
 def print_process_memory_usage():
     process = psutil.Process(os.getpid())
@@ -171,7 +178,7 @@ def process_chat_message(message, chat_history):
         chat_history_context=f"\n还有，这个是之前的对话记录： {chat_history[0]}"
 
     print(f'[INFO] question asked was: {message}')
-    lang_used=getResponse(
+    lang_used=getResponse3(
         prompt=lang_detection.format(question=message),
         max_tokens=50,
         temperature=0.01,
@@ -184,7 +191,7 @@ def process_chat_message(message, chat_history):
         i=0
         while True and i < RETRY:
             try:
-                translated=getResponse(
+                translated=getResponse3(
                     prompt=currentPrompt,
                     max_tokens=MAXLEN-len(currentPrompt),
                     temperature=0.2,
@@ -260,9 +267,30 @@ def chat():
     CHAT_HISTORY.append(f"{response}")
     return jsonify({"response": response})
 
+@app.route('/vote', methods=['POST'])
+def handle_vote():
+    data = request.json
+    message_id = data['message_id']
+    message_content = data['message_content']
+    vote_type = data['vote_type']  # 'upvote' or 'downvote'
+
+    # 如果消息 ID 不在字典中，将其初始化为 {'content': message_content, 'upvotes': 0, 'downvotes': 0}
+    if message_id not in messages_data:
+        messages_data[message_id] = {'content': message_content, 'upvotes': 0, 'downvotes': 0}
+
+    # 根据投票类型更新计数
+    if vote_type == 'upvote':
+        messages_data[message_id]['upvotes'] += 1
+    elif vote_type == 'downvote':
+        messages_data[message_id]['downvotes'] += 1
+
+    print(f'upvoate/downvoate logging: {messages_data}')
+    # 返回更新后的投票计数
+    return jsonify(messages_data[message_id])
+
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('index_neo.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
